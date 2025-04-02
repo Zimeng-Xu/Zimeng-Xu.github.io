@@ -3425,12 +3425,12 @@ figure.highlight pre .javascript .function {
   content: '';
 }
 #page-header.full_page {
-  height: 0.003333333333333px;
+  height: 400px;
   background-attachment: fixed;
 }
 #page-header.full_page #site-info {
   position: absolute;
-  top: 0.000333333333333px;
+  top: 150px;
   padding: 0 10px;
   width: 100%;
 }

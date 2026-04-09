@@ -2591,3 +2591,104 @@ TCP/IP中文译名为**传输控制协议/因特网互联协议**，又叫网络
 
 # Chapter 23 反射
 
+## 反射机制
+
+1.反射机制允许程序在执行期借助于`Reflection API`取得任何类的内部信息（比如成员变量、构造器、成员方法等等），并能操作对象的属性及方法。反射在设计模式和底层框架都会用到。
+2.、加载完类之后，在堆中就产生了一个`Class`类型的对象（一个类只有一个`Class`对象），这个对象包含了类的完整结构信息。通过这个对象得到类的结构。
+
+- 反射机制原理示意图：
+  <img src="https://i.imgs.ovh/2026/04/01/ZsVdgA.png" alt="ZsVdgA.png" border="0">
+  
+### 反射机制的作用
+
+1.在运行时，判断任意一个对象所属的类。
+2.在运行时，构造任意一个类的对象。
+3.在运行时，得到任意一个类所具有的成员变量和方法。
+4.在运行时，调用任意一个对象的成员变量和方法。
+5.生成动态代理。
+
+### 反射相关的主要类
+
+1.`java.lang.Class`：代表一个类，`Class`对象表示某个类加载后在堆中的对象。
+2.`java.lang.reflect.Method`：代表类的方法，`Method`对象表示某个类的方法。
+3.`java.lang.reflect.Field`：代表类的成员变量，`Field`对象标识某个类的成员变量。
+4.`java.lang.reflect.Constructor`：代表类的构造方法。`Constructor`对象表示构造器。 
+
+### 反射优点和缺点
+
+1.优点：可以动态的创建和使用对象（也是框架底层核心），使用灵活，没有反射机制，框架技术就失去底层支撑。
+2.缺点：使用反射基本是解释执行，对执行速度有影响。
+
+### 反射调用优化 - 关闭访问检查
+
+1.`Method`和`Field`、`Constructor`对象都有`setAccessible()`方法。
+2.`setAccessible()`作用是启动和禁用访问安全检查的开关。
+3.参数值为`true`表示：反射的对象在使用时取消访问检查，提高反射的效率。
+  参数值为`false`则表示反射的对象执行访问检查。
+  
+## Class类
+
+### 基本介绍
+
+1.`Class`也是类，因此也继承`Object`类。
+2.`Class`类对象**不是`new`出来的**，而是系统创建的。
+3.对于某个类的`Class`类对象，在内存中只有一份，因为**类只加载一次**。
+4.通过`Class`对象的一系列API，可以完整地得到一个类的完整结构。
+5.**`Class`对象是存放在堆的**。
+6.**类的字节码二进制数据是放在方法区的**，有的地方称为类的元数据（包括方法代码、变量名、方法名、访问权限等等）。
+
+### Class类的常用方法
+
+|方法名|功能说明|
+|:-:|:-:|
+|static Class forName(String name)|返回指定类名`name`的`Class`对象|
+|Object newInstance()|调用缺省构造函数，返回该`Class`对象的一个实例|
+|getName()|返回此`Class`对象所表示的实体（类、接口、数组类、基本类型等）名称|
+|Class getSuperClass()|返回当前`Class`对象的父类`Class`对象|
+|Class[] getInterfaces()|获取当前`Class`对象的接口|
+|ClassLoader getClassLoader()|返回该类的类加载器|
+|Class getSuperclass()|返回表示此`Class`所表示的实体的超类`Class`|
+|Constructor[] getConstructors()|返回一个包含某些`Constructor`对象的数组|
+|Field[] getDeclaredFields()|返回`Field`对象的一个数组|
+|Method getMethod(String name,Class ... paramTypes)|返回一个`Method`对象，此对象的形参类型为`paramType`|
+
+### 获取Class类对象
+
+1.**代码阶段/编译阶段**：已知一个类的全类名，且该类在类路径下，可以通过`Class`类的静态方法`forName()`获取，可能抛出`ClassNotFoundException`。
+  *应用场景：多用于配置文件，读取类全路径，加载类。*
+2.**Class类阶段（加载阶段）**：若已知具体的类，通过类的`class`获取，该方式最为安全可靠，程序性能最高。
+  *应用场景：多用于参数传递。*
+3.**Runtime运行阶段**：已知某个类的实例，调用该实例的`getClass()`方法获取`Class`对象。
+  *应用场景：通过创建好的对象，获取`Class`对象。*
+4.其他方式（**类加载器**）：
+  （1）先得到类加载器：`ClassLoader cl = 对象.getClass().getClassLoader();`
+  （2）通过类加载器得到`Class`对象：`Class clazz = cl.loadClass("类的全类名");`
+5.基本数据（`int`、`char`、`boolean`、`float`、`double`、`byte`、`long`、`short`）按照如下方式得到`Class`类对象：`Class cls = 基本数据类型.class`。
+6.基本数据类型对应的包装类，可以通过`.TYPE`得到`Class`类对象：`Class cls = 包装类.TYPE`。
+
+### 有Class对象的类型
+
+- 外部类、成员内部类、静态内部类、局部内部类、匿名内部类。
+- 接口（interface）。
+- 数组。
+- 枚举（enum）。
+- 注解（annotation）。
+- 基本数据类型。
+- void。
+
+## 类加载
+
+### 基本说明
+
+反射机制是Java实现动态语言的关键，也就是通过反射实现类动态加载。
+1.静态加载：编译时加载相关的类，如果没有则报错，依赖性太强。
+2.动态加载：运行时加载需要的类，如果运行时不用该类，即使该类不存在，也不报错，降低了依赖性。
+
+### 类加载时机
+
+静态加载：
+1.当创建对象时（`new`）。
+2.当子类被加载时。
+3.调用类中的静态成员时。
+
+动态加载：通过反射。

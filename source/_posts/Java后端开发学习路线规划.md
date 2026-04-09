@@ -7,7 +7,7 @@ tags: JAVA
 # JAVA后端开发学习路线规划
 |时间|学习内容|学习进度|备注|
 |:-:|:-:|:-:|:-:|
-||Java SE|`710/910`||
+||Java SE|`720/910`||
 ||Java Web|`待开始`|*maven+mysql+mybatis+spring*|
 ||苍穹外卖|`待开始`|*SSM增删改查*|
 ||Redis+点评|`待开始`|*redis实践、高级篇、原理篇*|

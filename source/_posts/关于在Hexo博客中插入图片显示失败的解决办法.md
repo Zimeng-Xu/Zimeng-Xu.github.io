@@ -35,4 +35,4 @@ categories: 经验分享
 
 # 解决办法 - 新
 
-由于上述网站调整，图片托管有效期从永久调整为1年。新解决办法参见该GitHub中的内容(https://github.com/slcnx/hexo-typora-asset)。
+由于上述网站调整，图片托管有效期从永久调整为1年。新解决办法参见该GitHub中的内容：https://github.com/slcnx/hexo-typora-asset 。

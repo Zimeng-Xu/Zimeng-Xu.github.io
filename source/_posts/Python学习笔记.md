@@ -237,8 +237,8 @@ categories: 学习笔记
 
 ## 位运算符
 
-<img src="https://i.imgs.ovh/2025/04/17/jsuaM.png" alt="jsuaM.png" border="0">
-<img src="https://i.imgs.ovh/2025/04/17/jsGIx.png" alt="jsGIx.png" border="0">
+![BitOperater](Python%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/BitOperater.jpg)
+![BitOperater2](Python%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/BitOperater2.jpg)
 
 # Chapter 05 - 程序控制结构
 

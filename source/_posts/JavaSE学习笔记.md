@@ -2719,3 +2719,99 @@ TCP/IP中文译名为**传输控制协议/因特网互联协议**，又叫网络
 <div style="text-align: center;">
 <img src="JavaSE%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%B5%81%E7%A8%8B%E5%9B%BE.png" alt="类加载流程图" />
 </div>
+
+### 类加载各阶段完成的任务
+
+1.**加载**：将类的`class`文件读入内存，并为之创建一个`java.lang.Class`对象。此过程由类加载器完成。
+2.**连接**：将类的二进制数据合并到JRE中。
+  - 验证：目的是为了确保`Class`文件的字节流中包含的信息符合当前虚拟机的要求，并且不会危害虚拟机自身的安全。内容包括文件格式验证（是否以魔数`oxcafebabe`开头）、元数据验证、字节码验证和符号引用验证。可以考虑使用`-Xverify:none`参数来关闭大部分的类验证措施，缩短虚拟机类加载的时间。
+  - 准备：JVM会在该阶段对**静态变量**分配内存并默认初始化（对应数据类型的默认初始值，如`0`、`0L`、`null`等）。这些变量所使用的内存都将在方法区中进行分配。**实例对象在准备阶段不会分配内存，常量一旦分配值就不会发生更改。**
+  - 解析：虚拟机将常量池内的符号引用替换为直接引用的过程。
+3.**初始化**：JVM负责对类进行初始化，这里主要是指静态成员。
+
+## 通过反射获取类的结构信息
+
+### java.lang.Class类
+
+1.`getName`：获取全类名。
+2.`getSimpleName`：获取简单类名。
+3.`getFields`：获取所有`public`修饰的属性，包含本类以及父类的。
+4.`getDeclaredFields`：获取本类中所有属性。
+5.`getMethods`：获取所有`public`修饰的方法，包含本类以及父类的。
+6.`getDeclaredMethods`：获取本类中所有方法。
+7.`getConstructors`：获取所有`public`修饰的构造器，包含本类以及父类的。
+8.`getDeclaredConstructors`：获取本类中所有构造器。
+9.`getPackage`：以`Package形式返回包信息。
+10.`getSuperClass`：以`Class`形式返回父类信息。
+11.`getlnterfaces`：以`Class[]`形式返回接口信息。
+12.`getAnnotations`：以`Annotation[]`形式返回注解信息。
+
+### java.lang.reflect.Field类
+
+1.`getModifiers`：以`int`形式返回修饰符。（默认修饰符是0，`public`是1，`private`是2，`protected`是4，`static`是8，`final`是16。）
+2.`getType`：以`Class`形式返回类型。
+3.`getName`：返回属性名。
+
+### java.lang.reflect.Method类
+
+1.`getModifiers`：以`int`形式返回修饰符。（默认修饰符是0，`public`是1，`private`是2，`protected`是4，`static`是8，`final`是16。）
+2.`getReturnType`：以`Class`形式获取返回类型。
+3.`getName`：返回方法名。
+4.`getParameterTypes`：以`Class[]`返回参数类型数组。
+
+### java.lang.reflect.Constructor类
+
+1.`getModifiers`：以`int`形式返回修饰符。（默认修饰符是0，`public`是1。）
+2.`getName`：返回构造器名（全类名）。
+3.`getParameterTypes`：以`Class[]`返回参数类型数组。
+
+## 通过反射创建对象
+
+1.方式一：调用类中的`public`修饰的无参构造器。
+2.方式二：调用类中的指定构造器。
+3.`Class`类相关方法：
+  - `newInstance`：调用类中的无参构造器，获取对应类的对象。
+  - `getConstructor(Class...clazz)`：根据参数列表，获取对应的公有构造器对象。
+  - `getDecalaredConstructor(Class...clazz)`：根据参数列表，获取对应的所有构造器对象。
+
+4.`Constructor`类相关方法：
+  - `setAccessible`：暴力破解。
+  - `newInstance(Object...obj)`：调用构造器。
+
+## 通过反射访问类中的成员
+
+1.根据属性名获取`Field`对象。
+  > Field f = clazz.对象.getDeclaredField(属性名);
+
+2.暴力破解：`f.setAccessible(true);`
+3.访问：
+  > f.set(o,值);
+  > syso(f.get(o));
+
+4.**注意：如果是静态属性，则`set`和`get`中的参数`o`，可以写成`null`**。
+
+## 通过反射访问类中的成员
+
+1.根据方法名和参数列表获取`Method`方法对象：
+  > Method m = clazz.getDeclaredMethod(方法名,XX.class);
+
+2.获取对象：
+  > Object o = clazz.newInstance();
+
+3.暴力破解：
+  > m.setAccessible(true);
+
+4.访问：
+  > Object returnValue = m.invoke(o,实参列表);
+
+5.**注意：如果是静态方法，则`invoke`的参数`o`，可以写成`null`**。
+
+# Chapter 24 MySQL
+
+## 连接到MySQL的指令
+
+`mysql -h 主机IP -P 端口 -u 用户名 -p密码`
+> 1.`-p密码`不要有空格。
+> 2.`-p`后面没有写密码，回车会要求输入密码。
+> 3.如果没有写`-h 主机`，默认就是本机。
+> 4.如果没有写`-P 端口`，默认就是`3306`。

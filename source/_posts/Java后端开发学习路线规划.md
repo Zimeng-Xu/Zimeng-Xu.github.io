@@ -8,7 +8,7 @@ tags: JAVA
 |时间|学习内容|学习进度|备注|
 |:-:|:-:|:-:|:-:|
 |-2026.9.17|Java SE|`910/910`||
-||Java Web|`待开始`|*maven+mysql+mybatis+spring*|
+|2026.9.21-|Java Web|`/200`|*maven+mysql+mybatis+spring*|
 ||苍穹外卖|`待开始`|*SSM增删改查*|
 ||Redis+点评|`待开始`|*redis实践、高级篇、原理篇*|
 ||Netty+手写rpc|`待开始`|*网络通信、负载均衡*|

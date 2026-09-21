@@ -5,7 +5,7 @@ tags: JavaSE
 categories: 学习笔记
 ---
 
-[jdk25 API文档](https://docs.oracle.com/en/java/javase/25/docs/api/index.html)
+[JDK25 API文档](https://docs.oracle.com/en/java/javase/25/docs/api/index.html)
 
  # Chapter 07 面向对象编程（基础）
 
@@ -2815,3 +2815,1637 @@ TCP/IP中文译名为**传输控制协议/因特网互联协议**，又叫网络
 > 2.`-p`后面没有写密码，回车会要求输入密码。
 > 3.如果没有写`-h 主机`，默认就是本机。
 > 4.如果没有写`-P 端口`，默认就是`3306`。
+
+## SQL语句分类
+
+- `DDL`：数据定义语句（`creat`）。
+- `DML`：数据操作语句（增加`insert`/修改`update`/删除`delete`）。
+- `DQL`：数据查询语句（`select`）。
+- `DCL`：数据控制语句（管理数据库：比如用户权限）。
+
+## 创建数据库
+
+```mysql
+CREATE DATABASE [IF NOT EXISTS] db_name
+		[create_specification[,create_specification]...]
+
+create_specification:
+
+	[DEFAULT] CHARACTER SET charset_name
+	[DEFAULT] COLLATE collation_name
+```
+
+> 1.`CHARACTER SET`：指定数据库采用的字符集，如果不指定字符集，默认**utf8**。
+> 2.`COLLATE`：指定数据库字符集的校对规则（常用的**utf8_bin**`区分大小写`、**utf8_general_ci**`不区分大小写`。注意：默认是**utf8_general_ci**）。
+
+## 查看/删除数据库
+
+```mysql
+#查看当前数据库服务器中的所有数据库：
+SHOW DATABASES
+
+#显示数据库创建语句：
+SHOW CREATE DATABASE db_name
+
+#数据库删除语句：
+DROP DATABASE [IF EXISTS] db_name
+```
+
+> 在创建数据库/表时，为了规避关键字，可以使用反引号` `` `解决。
+
+## 备份恢复数据库
+
+- 备份数据库（注意：**在DOS执行**）
+  > mysqldump -u 用户名 -p -B 数据库1 数据库2 数据库n > 文件名.sql
+
+- 恢复数据库（注意：**进入MySQL命令行再执行**）
+  > Source 文件名.sql
+  > 或者直接将`文件名.sql`的内容放到SQLyog的查询编辑器中执行。
+
+## 备份恢复数据库的表
+
+- 备份库的表
+  > mysqldump -u 用户名 -p密码 数据库 表1 表2 表n > 文件名.sql
+
+## 创建表
+
+```mysql
+CREATE TABLE table_name
+(
+	field1 datatype,
+	field2 datatype,
+	field3 datatype
+)CHARACTER SET charset_name COLLATE collation_name ENGINE engine_name;
+```
+
+> `field`：指定列名。
+> `datatype`：指定列类型（字段类型）。
+> `CHARACTER SET`：如不指定，则为所在数据库字符集。
+> `COLLATE`：如不指定，则为所在数据库校对规则。
+> `ENGINE`：存储引擎。
+
+## MySQL常用数据类型
+
+### 整型
+
+|类型|字节|最小值|最大值|
+|:-:|:-:|:-:|:-:|
+|TINYINT|1|-128|127|
+|TINYINT UNSIGNED|1|0|255|
+|SMALLINT|2|-32768|32767|
+|SMALLINT UNSIGNED|2|0|65535|
+|MEDIUMINT|3|-8388608|8388607|
+|MEDIUMINT UNSIGNED|3|0|16777215|
+|INT|4|-2147483648|2147483647|
+|INT UNSIGNED|4|0|4294967295|
+|BIGINT|8|-9223372036854775808|9223372036854775807|
+|BIGINT UNSIGNED|8|0|18446744073709551615|
+
+> 使用规范：在能够满足需求的情况下，尽量选择占用空间小的类型。
+
+### bit
+
+#### 基本使用
+
+```mysql
+mysql> create table t02(num bit(8));
+mysql> insert into t02(1,3);
+mysql> insert into t02 values(2,65);
+```
+
+#### 细节说明
+
+1.`bit`字段显示时，按照位的方式显示。
+2.查询的时候仍然可以使用添加的数值来查询。
+3.如果一个值只有0/1，可以考虑使用`bit(1)`，可以节约空间。
+4.位类型，`bit(M)`中，M指定位数，默认值为1，范围为1-64。
+5.使用不多。
+6.添加数据的范围按照设定的位数来确定。
+
+### 小数类型
+
+```mysql
+FLOAT/DOUBLE [UNSIGNED]
+```
+
+> FLOAT：单精度小数。
+> DOUBLE：双精度小数。
+
+```mysql
+DECIMAL[M,D] [UNSIGNED]
+```
+
+> 1.可以支持更加精确的小数位。`M`是小数位数（精度）的**总数**，`D`是小数点（标度）后面的位数。
+> 2.如果`D`是0，则值没有小数点或分数部分。`M`最大为65，`D`最大为30。如果`D`被省略，默认是0；如果`M`被省略，默认是10。
+> 建议：如果希望小数的精度高，推荐使用`DECIMAL`。
+
+### 字符串类型
+
+#### 字符串的基本使用
+
+```mysql
+CHAR(size)
+# 固定长度字符串，最大255字符
+
+VARCHAR(size)
+# 可变长度字符串，最大65532字节（utf8编码最大21844字符，其中1-3个字节用于记录大小。不同编码可以存放的最大字符数不同）
+```
+
+#### 字符串使用细节
+
+1.`char(4)`：这个4表示**字符数**（最大为255），**不是字节数**。不管是中文还是字母都是放四个，按照字符计算。
+  `varchar(4)`：这个4表示**字符数**，不管是字母还是中文都以定义好的表的编码来存放数据，**是按照字符来存放的**。
+2.`char(4)`是定长，即即使插入的内容长度不足4个字符，也会占用分配的4个字符空间。
+  `varchar(4)`是变长，即插入的内容长度不足4个字符，则按照实际占用空间来分配**（`VARCHAR`本身还需要占用1-3个字节来记录存放内容的长度）**。
+3.如果数据是定长，推荐使用`char`；如果一个字段的长度是不确定的，则使用`varchar`。
+4.查询速度：`CHAR` > `VARCHAR`。
+5.在存放文本时，也可以使用`Text`数据类型。可以将`TEXT`列视为`VARCHAR`列。**（注意：`Text`不能有默认值，大小为0-2^16字节。如果希望存放更多字符，可以选择`MEDIUMTEXT`或者`LONGTEXT`。）
+
+### 日期类型的基本使用
+
+代码示例：
+```mysql
+CREATE TABLE birthday
+( t1 DATE,t2 DATETIME,
+	t3 TIMESTAMP NOT NULL DEFAULT
+CURRENT_TIMESTAMP ON UPDATE
+CURRENT_TIMESTAMP);
+# TIMESTAMP：时间戳
+
+mysql>INSERT INTO birthday(t1,t2)
+VALUES('2026-07-22','2026-07-22 16:53:24');
+```
+
+细节说明：
+时间戳在`INSERT`和`UPDATE`时，**自动更新**。
+
+## 修改表
+
+### 基本介绍
+
+使用`ALTER TABLE`语句追加、修改或删除列的语法。
+- 添加列：
+  ```mysql
+  ALTER TABLE tablename
+  ADD (column datatype[DEFAULT expr]
+  		[,column datatype]...);
+  ```
+  
+- 修改列：
+  ```mysql
+  ALTER TABLE tablename
+  MODIFY (column datatype [DEFAULT expr]
+  		[,column datatype]...);
+  ```
+  
+- 删除列：
+  ```mysql
+  ALTER TABLE tablename
+  DROP (column);
+  ```
+  
+- 查看表的结构（查看表的列）：`DESC 表名`。
+- 修改表名：`RENAME TABLE 表名 TO 新表名`。
+- 修改表字符集：`ALTER TABLE 表名 CHARACTER SET 字符集`。
+
+## 数据库CRUD语句
+
+### INSERT语句：添加数据
+
+```mysql
+INSERT INTO table_name[(column[,column...])]
+VALUES	(value[,value...]);
+```
+
+细节说明：
+1.插入的数据应与字段的数据类型相同。
+2.数据的长度应在列的规定范围内。
+3.在`VALUES`中列出的数据位置必须与被加入的列的排列位置相对应。
+4.字符和日期型数据应包含在单引号中。
+5.列可以插入控制**（前提是该字段允许为空）**。
+6.使用`INSERT INTO table_name(列名...) VALUES(),(),()`的形式添加多条记录。
+7.如果是给表中的所有字段添加数据，可以不写前面的字段名称。
+8.默认值的使用：当不给某个字段值时，如果有默认值就会添加，否则报错。
+
+### UPDATE语句：更新数据
+
+```mysql
+UPDATE table_name
+		SET col_name1=expr1[,col_name2=expr2...]
+		[WHERE where_defintion]
+```
+
+使用细节：
+1.`UPDATE`语法可以用新值更新原有表行中的各列。
+2.`SET`子句指示要修改哪些列和要给予哪些值。
+3.`WHERE`子句指定应更新哪些行。如果没有`WHERE`语句，则更新所有的行（记录）。
+4.如果需要修改多个字段，可以通过`SET 字段1=值1,字段2=值2...`。
+
+### DELETE语句：删除语句
+
+```mysql
+DELETE FROM table_name
+		[WHERE where_defintion]
+```
+
+使用细节：
+1.如果不适用`WHERE`子句，将**删除表中所有数据**。
+2.`DELETE`语句不能删除某一列的值（可以使用`UPDATE`设为`NULL`或者`''`）。
+3.使用`DELETE`语句仅删除记录，不删除表本身。如要删除表，使用`DROP TABLE 表名`语句。
+
+### SELECT语句：查找语句
+
+```mysql
+SELECT [DISTINCT] *|{column1,column2,column3...}
+		FROM table_name;
+```
+
+注意事项：
+1.`SELECT`指定查询哪些列的数据。
+2.`column`指定列名。
+3.`*`代表查询所有列。
+4.`FROM`指定查询哪张表。
+5.`DISTINCT`可选，指显示结果时，是否去掉重复数据。
+
+#### 使用表达式，对查询的列进行运算
+
+```mysql
+SELECT *|{column1|expression,column2|expression,...}
+		FROM table_name;
+```
+
+#### AS语句
+
+```mysql
+SELECT column_name AS 别名 FROM 表名;
+```
+
+#### 在WHERE子句中经常使用的运算符
+
+<table>
+    <tr>
+        <th>分类</th>
+        <th>运算符</th>
+        <th>说明</th>
+    </tr>
+    <tr>
+        <td rowspan="11" style="text-align:center; vertical-align:middle;">
+    比较运算符
+</td>
+        <td><code>&gt;</code></td>
+        <td>大于</td>
+    </tr>
+    <tr>
+        <td><code>&lt;</code></td>
+        <td>小于</td>
+    </tr>
+    <tr>
+        <td><code>&lt;=</code></td>
+        <td>小于等于</td>
+    </tr>
+    <tr>
+        <td><code>&gt;=</code></td>
+        <td>大于等于</td>
+    </tr>
+    <tr>
+        <td><code>=</code></td>
+        <td>等于</td>
+    </tr>
+    <tr>
+        <td><code>&lt;&gt;</code>、<code>!=</code></td>
+        <td>不等于</td>
+    </tr>
+    <tr>
+        <td><code>BETWEEN ... AND ...</code></td>
+        <td>显示在某一区间的值</td>
+    </tr>
+    <tr>
+        <td><code>IN (set)</code></td>
+        <td>显示在集合中的值，例如：<code>IN (100, 200)</code></td>
+    </tr>
+    <tr>
+        <td><code>LIKE 'pattern'</code></td>
+        <td>模糊查询</td>
+    </tr>
+    <tr>
+        <td><code>NOT LIKE 'pattern'</code></td>
+        <td>模糊查询（取反）</td>
+    </tr>
+    <tr>
+        <td><code>IS NULL</code></td>
+        <td>判断是否为空</td>
+    </tr>
+    <tr>
+        <td rowspan="3" style="text-align:center; vertical-align:middle;">
+    逻辑运算符
+</td>
+        <td><code>AND</code></td>
+        <td>多个条件同时成立</td>
+    </tr>
+    <tr>
+        <td><code>OR</code></td>
+        <td>多个条件任一成立</td>
+    </tr>
+    <tr>
+        <td><code>NOT</code></td>
+        <td>条件不成立，例如：<code>WHERE NOT (salary > 100)</code></td>
+    </tr>
+</table>
+
+#### 使用ORDER BY子句排序查询结果
+
+```mysql
+SELECT column1,column2,column3...
+		FROM table;
+		ORDER BY column ASC|DESC,...
+```
+
+1.`ORDER BY`指定排序的列，排序的列既可以是表中的列名，也可以是`SELECT`语句后指定的列名。
+2.`ASC`为升序（默认），`DESC`为降序。
+3.`ORDER BY`子句应位于`SELECT`语句的结尾。
+
+#### 查询加强
+
+- 使用`WHERE`子句。
+- 使用`LIKE`操作符模糊查询：
+  - `%`：表示0到多个任意字符。
+  - `_`：表示单个任意字符。
+  
+- 使用`ORDER BY`子句。
+- 分页查询：
+  ```mysql
+  SELECT ... LIMIT start,rows
+  ```
+  
+  > 表示从`start+1`行开始取，取出`rows`行，`start`从0开始计算。
+
+- 使用分组函数和分组子句`GROUP BY`。
+- 总结：如果`SELECT`语句同时包含有`GROUP BY`、`HAVING`、`LIMIT`、`ORDER BY`，那么它们的顺序是：`GROUP BY`→`HAVING`→`ORDER BY`→`LIMIT`。
+
+#### 多表查询
+
+##### 笛卡尔集
+在默认情况下，当两张表查询时，会从第一张表中取出一行与第二张表的每一行进行组合，返回结果（含有两张表的所有列）。一共返回的记录数为`第一张表的行数*第一张表的行数`。
+解决办法：**写出正确的过滤条件。**多表查询的条件不能少于`表的个数-1`，否则会出现笛卡尔集。
+
+##### 自连接
+
+自连接是指在同一张表的连接查询（将同一张表看做两张表）。
+特点：
+1.把同一张表当作两张表使用。
+2.需要给表取别名。
+3.列名不明确，可以指定列的别名。
+
+##### 外连接
+
+- 左外连接：左侧的表**完全显示**。
+  ```mysql
+  SELECT ... FROM table_left LEFT JOIN table_right ON ...
+  ```
+  
+- 右外连接：右侧的表**完全显示**。
+  ```mysql
+  SELECT ... FROM table_left RIGHT JOIN table_right ON ...
+  ```
+
+#### 子查询
+
+子查询是指嵌入在其他SQL语句中的`SELECT`语句，也叫嵌套查询。
+- 单行子查询：只返回一行数据的子查询语句。
+- 多行子查询：返回多行数据的子查询，使用关键字`IN`。
+- 子查询当作临时表使用，在`FROM`子句中使用子查询。
+- 在多行子查询中使用`ALL`、`ANY`操作符。
+- 多列子查询：查询返回多个列数据的子查询语句。
+  > (字段1,字段2...) = (SELECT 字段1,字段2 FROM ...)
+
+#### 合并查询
+
+为了合并多个`SELECT`语句的结果，可以使用集合操作符号`UNION`、`UNION ALL`。
+- `UNION ALL`：该操作符用于取得两个结果集的并集。当使用该操作符时，**不会取消重复行**。
+- `UNION`：该操作符与`UNION ALL`相似，但是**会自动去掉结果集中的重复行**。
+
+## 函数
+
+### 统计函数
+
+#### COUNT
+
+`COUNT`返回行的总数：
+```mysql
+SELECT COUNT (*)|COUNT(列名) FROM table_name
+		[WHERE where_defintion]
+```
+
+> `COUNT (*)`不排除为`NULL`的内容，`COUNT(列名)`会排除为`NULL`的内容。 
+
+#### SUM
+
+`SUM`函数返回满足`WHERE`条件的行的和：
+```mysql
+SELECT  SUM(列名) {,SUM(列名)} FROM table_name
+		[WHERE where_defintion]
+```
+
+> 1.`SUM`**仅对数值起作用**，否则会报错。
+> 2.对多列求和，`,`不能少。
+
+#### AVG
+
+`AVG`函数返回满足`WHERE`条件的一列的平均值：
+```mysql
+SELECT AVG(列名) {,AVG(列名)...} FROM table_name
+		[WHERE where_defintion]
+```
+
+#### MAX/MIN
+
+`MAN/MIN`函数返回满足`WHERE`条件的一列的最大/小值：
+```mysql
+SELECT MAX(列名) FROM table_name
+		[WHERE where_defintion]
+```
+#### 分组统计
+
+- 使用GROUP BY子句对列进行分组：
+  ```mysql
+  SELECT column1,column2,column3... FROM table
+  		GROUP BY column
+  ```
+
+- 使用HAVING子句对分组后的结果进行过滤
+  ```mysql
+  SELECT column1,column2,column3...
+  		FROM table
+  		GROUP BY column HAVING ...
+  ```
+
+### 字符串函数
+
+<table border="1" cellspacing="0" cellpadding="8" style="border-collapse: collapse; width: 100%;">
+    <tr>
+        <th style="width:40%;">字符串函数</th>
+        <th>说明</th>
+    </tr>
+    <tr>
+        <td><span style="color:red;"><b>CHARSET(str)</b></span></td>
+        <td>返回字符串字符集</td>
+    </tr>
+    <tr>
+        <td><span style="color:red;"><b>CONCAT(string2 [, ... ])</b></span></td>
+        <td>连接字符串</td>
+    </tr>
+    <tr>
+        <td><b>INSTR(string, substring)</b></td>
+        <td>返回 <b>substring</b> 在 <b>string</b> 中出现的位置，没有返回 <b>0</b>（如果没有设定好的表，可以使用DUAL亚元表作为测试表）</td>
+    </tr>
+    <tr>
+        <td><span style="color:red;"><b>UCASE(string2)</b></span></td>
+        <td>转换成大写</td>
+    </tr>
+    <tr>
+        <td><span style="color:red;"><b>LCASE(string2)</b></span></td>
+        <td>转换成小写</td>
+    </tr>
+    <tr>
+        <td><b>LEFT(string2, length)</b></td>
+        <td>从 <b>string2</b> 的左边起取 <b>length</b> 个字符</td>
+    </tr>
+        <tr>
+        <td><b>RIGHT(string2, length)</b></td>
+        <td>从 <b>string2</b> 的右边起取 <b>length</b> 个字符</td>
+    </tr>
+    <tr>
+        <td><span style="color:red;"><b>LENGTH(string)</b></span></td>
+        <td><b>string</b> 长度（按照字节）</td>
+    </tr>
+    <tr>
+        <td>
+            <span style="color:red;">
+                <b>REPLACE(str, search_str, replace_str)</b>
+            </span>
+        </td>
+        <td>在 <b>str</b> 中用 <b>replace_str</b> 替换 <b>search_str</b></td>
+    </tr>
+    <tr>
+        <td><b>STRCMP(string1, string2)</b></td>
+        <td>逐字符比较两字符串大小</td>
+    </tr>
+    <tr>
+        <td>
+            <span style="color:red;">
+                <b>SUBSTRING(str, position [, length])</b>
+            </span>
+        </td>
+        <td>从 <b>str</b> 的 <b>position</b> 开始（从1开始计算），取 <b>length</b> 个字符</td>
+    </tr>
+    <tr>
+        <td><b>LTRIM(string2) / RTRIM(string2)</b></td>
+        <td>去除前端空格或后端空格</td>
+    </tr>
+        <tr>
+        <td><b>TRIM(string)</b></td>
+        <td>去除前后两端的空格</td>
+    </tr>
+</table>
+
+### 数学函数
+
+<table border="1" cellspacing="0" cellpadding="8" style="border-collapse: collapse; width: 100%;">
+    <tr>
+        <th style="width:40%;">数学函数</th>
+        <th>说明</th>
+    </tr>
+    <tr>
+        <td><span style="color:red;"><b>ABS(num)</b></span></td>
+        <td>绝对值</td>
+    </tr>
+    <tr>
+        <td><b>BIN(decimal_number)</b></td>
+        <td>十进制转二进制</td>
+    </tr>
+    <tr>
+        <td><span style="color:red;"><b>CEILING(number2)</b></span></td>
+        <td>向上取整，得到比 <b>number2</b> 大的最小整数</td>
+    </tr>
+    <tr>
+        <td><b>CONV(number2, from_base, to_base)</b></td>
+        <td>进制转换</td>
+    </tr>
+    <tr>
+        <td><span style="color:red;"><b>FLOOR(number2)</b></span></td>
+        <td>向下取整，得到比 <b>number2</b> 小的最大整数</td>
+    </tr>
+    <tr>
+        <td><span style="color:red;"><b>FORMAT(number, decimal_places)</b></span></td>
+        <td>保留小数位数（四舍五入）</td>
+    </tr>
+    <tr>
+        <td><b>HEX(decimalNumber)</b></td>
+        <td>转换为十六进制</td>
+    </tr>
+    <tr>
+        <td><b>LEAST(number, number2 [, ...])</b></td>
+        <td>求最小值</td>
+    </tr>
+    <tr>
+        <td><b>MOD(numerator, denominator)</b></td>
+        <td>求余（取模）</td>
+    </tr>
+    <tr>
+        <td><span style="color:red;"><b>RAND([seed])</b></span></td>
+        <td><b>RAND([seed])</b>：返回一个随机数，其范围为 <b>0 ≤ v ≤ 1.0</b></td>
+    </tr>
+</table>
+
+### 日期函数
+
+<table border="1" cellspacing="0" cellpadding="8" style="border-collapse: collapse; width: 100%;">
+    <tr>
+        <th style="width:40%;">日期和时间函数</th>
+        <th>说明</th>
+    </tr>
+    <tr>
+        <td><span style="color:red;"><b>CURRENT_DATE()</b></span></td>
+        <td>当前日期</td>
+    </tr>
+    <tr>
+        <td><span style="color:red;"><b>CURRENT_TIME()</b></span></td>
+        <td>当前时间</td>
+    </tr>
+    <tr>
+        <td><span style="color:red;"><b>CURRENT_TIMESTAMP()</b></span></td>
+        <td>当前时间戳</td>
+    </tr>
+    <tr>
+        <td><span style="color:red;"><b>DATE(datetime)</b></span></td>
+        <td>返回 <b>datetime</b> 的日期部分</td>
+    </tr>
+    <tr>
+        <td><span style="color:red;"><b>DATE_ADD(date2, INTERVAL d_value d_type)</b></span></td>
+        <td>在 <b>date2</b> 中加上日期或时间</td>
+    </tr>
+    <tr>
+        <td><span style="color:red;"><b>DATE_SUB(date2, INTERVAL d_value d_type)</b></span></td>
+        <td>在 <b>date2</b> 上减去一个时间</td>
+    </tr>
+    <tr>
+        <td><span style="color:red;"><b>DATEDIFF(date1, date2)</b></span></td>
+        <td>两个日期之差（结果是天数）</td>
+    </tr>
+    <tr>
+        <td><b>TIMEDIFF(date1, date2)</b></td>
+        <td>两个时间之差（多少小时、多少分钟、多少秒）</td>
+    </tr>
+    <tr>
+        <td><span style="color:red;"><b>NOW()</b></span></td>
+        <td>当前时间</td>
+    </tr>
+    <tr>
+        <td><b>YEAR(datetime)</b><br>
+            <b>MONTH(datetime)</b><br>
+            <b>DATE(datetime)</b><br>
+        </td>
+        <td>获取年月日</td>
+    </tr>
+    <tr>
+        <td>
+            <b>UNIX_TIMESTAMP()</b>
+        </td>
+        <td>返回1970-1-1到现在的秒数</td>
+    </tr>
+    <tr>
+        <td>
+            <b>FROM_UNIXTIME()</b>
+        </td>
+        <td>把一个UNIX_TIMESTAMP秒数转成指定格式的日期</td>
+    </tr>
+</table>
+
+> 1.`DATE_ADD()`中的`INTERVAL`后面可以是`YEAR`、`HOUR`、`MINUTE`、`SECOND`、`DAY`等。
+> 2.`DATE_SUB()`中的`INTERVAL`后面可以是`YEAR`、`HOUR`、`MINUTE`、`SECOND`、`DAY`等。
+> 3.`DATEDIFF(date1,date2)`得到的是天数，而且是`date1-date2`的天数，因此可以取复数。
+> 4.`DATE()`、`DATE_ADD()`、`DATE_SUB()`、`DATEDIFF()`这四个函数的日期类型可以是`date`、`datetime`或者`timestamp`。
+> 5.在实际开发中，经常使用`int`来保存一个`unix`时间戳，然后使用`FROM_UNIXTIME`进行转换。
+
+### 加密和系统函数
+
+<table border="1" cellspacing="0" cellpadding="8" style="border-collapse: collapse; width: 100%;">
+    <tr>
+        <th style="width:40%;">系统信息与加密函数</th>
+        <th>说明</th>
+    </tr>
+    <tr>
+        <td><span style="color:red;"><b>USER()</b></span></td>
+        <td>查询当前用户，返回格式：用户@IP地址</td>
+    </tr>
+    <tr>
+        <td><b>DATABASE()</b></td>
+        <td>返回当前数据库名称</td>
+    </tr>
+    <tr>
+        <td><span style="color:red;"><b>MD5(str)</b></span></td>
+        <td>为字符串 <b>str</b> 计算一个 32 位 MD5 字符串，常用于用户密码加密</td>
+    </tr>
+    <tr>
+        <td>
+            <b>PASSWORD(str)</b><br>
+            <code>SELECT * FROM mysql.user \G</code>
+        </td>
+        <td>从原文密码 <b>str</b> 计算并返回密码字符串，通常用于对 MySQL 数据库用户密码进行加密</td>
+    </tr>
+</table>
+
+### 流程控制函数
+
+<table border="1" cellspacing="0" cellpadding="8" style="border-collapse: collapse; width:100%;">
+    <tr>
+        <th style="width:40%;">条件判断函数</th>
+        <th>说明</th>
+    </tr>
+    <tr>
+        <td>
+            <span style="color:red;"><b>IF(expr1, expr2, expr3)</b></span>
+        </td>
+        <td>
+            如果 <b>expr1</b> 为 True，则返回 <b>expr2</b>，否则返回 <b>expr3</b>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <b>IFNULL(expr1, expr2)</b>
+        </td>
+        <td>
+            如果 <b>expr1</b> 不为空 NULL，则返回 <b>expr1</b>，否则返回 <b>expr2</b>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <span style="color:red;"><b>SELECT CASE</b></span><br>
+            <span style="color:blue;"><b>WHEN expr1 THEN expr2</b></span><br>
+            <span style="color:purple;"><b>WHEN expr3 THEN expr4</b></span><br>
+            <span style="color:red;"><b>ELSE expr5 END</b></span><br>
+            （类似多重分支）
+        </td>
+        <td>
+            如果 <b>expr1</b> 为 TRUE，则返回 <b>expr2</b>；<br>
+            如果 <b>expr3</b> 为 TRUE，则返回 <b>expr4</b>；<br>
+            否则返回 <b>expr5</b>
+        </td>
+    </tr>
+</table>
+
+## 表复制
+
+自我复制数据（蠕虫复制）：
+为了对某个SQL语句进行效率测试，需要海量数据时，可以使用此法为表创建海量数据。
+- 表去重思路：
+  1.先创建一张临时表，该表的结构和原表一样。
+  2.把临时表的记录通过`DISTINCT`关键字处理后把记录复制到临时表。
+  3.清除掉原表记录。
+  4.把临时表的记录复制到原表。
+  5.`DROP`掉临时表。
+
+## 约束
+
+### 基本介绍
+
+约束用于确保数据库的数据满足特定的商业规则。在MySQL中，约束包括：`NOT NU LL`、`UNIQUE`、`PRIMARY KEY`、`FOREIGN KEY`和`CHECK`五种。
+
+### PRIMARY KEY 主键
+
+#### 基本使用
+
+> 字段名 字段类型 PRIMARY KEY
+
+用于唯一的标示表行的数据。当定义主键约束后，**该列不能重复**。
+
+#### 细节说明
+
+1.`PRIMARY KEY`不能重复而且不能为`NULL`。
+2.一张表最多只能有一个主键，但可以是复合主键。
+3.主键的指定方式有2中：
+  - 直接在字段名后面指定：
+    > 字段 PRIMARY KEY
+  
+  - 在表定义最后写：
+    > PRIMARY KEY(列名);
+
+4.使用`DESC 表名`，可以看到`PRIMARY KEY`的情况。
+
+### NOT NULL 非空
+
+如果在列上定义了`NOT NULL`，那么当插入数据时，必须为列提供数据。
+> 字段名 字段类型 NOT NULL 
+
+### UNIQUE 唯一
+
+当定义了唯一约束后，该列值是不能重复的。
+> 字段名 字段类型 UNIQUE
+
+细节说明：
+1.如果没有指定`NOT NULL`，则`UNIQUE`字段可以有多个`NULL`。
+2.如果一个列（字段）是`UNIQUE NOT NULL`，则使用效果类似`PRIMARY KEY`。
+3.一张表可以有多个`UNIQUE`字段。
+
+### FOREIGN KEY 外键
+
+用于定义主表和从表之间的关系：**外键约束要定义在从表上**，主表则必须具有主键约束或是`UNIQUE`约束。当定义外键约束后，要求外键列数据必须在主表的主键列存在或是为`NULL`。
+> FOREIGN KEY (本表字段名) REFERENCES 主表名(主键名或UNIQUE字段名)
+
+细节说明：
+1.外键指向的表的字段，要求是`PRIMARY KEY`或者是`UNIQUE`。
+2.表的类型是InnoDB，这样的表才支持外键。
+3.外键字段的类型要和主键字段的类型一致（长度可以不同）。
+4.外键字段的值，必须在主键字段中出现过，或者为`NULL`**（前提是外键字段允许为`NULL`）**
+5.一旦建立主外键的关系，数据就不能随意删除了。
+
+### CHECK
+
+用于强制行数据必须满足的条件。
+> 列名 类型 CHECK(CHECK条件)
+
+### 自增长
+
+#### 基本介绍
+
+> 字段名 整型 PRIMARY KEY AUTO_INCREMENT
+
+#### 添加自增长的字段方式
+
+- `INSERT INTO xxx (字段1,字段2...) VALUES(NULL,'值'...);`
+- `INSERT INTO xxx (字段2...) VALUES('值1','值2'...);`
+- `INSERT INTO xxx VALUES(NULL,'值1'...);`
+
+#### 使用细节
+
+1.一般来说，自增长是和`PRIMARY KEY`配合使用的。
+2.自增长也可以单独使用，但是需要配合一个`UNIQUE`。
+3.自增长修饰的字段一般为整数型的。虽然小数也可以，但是使用情况极少。
+4.自增长默认从1开始，也可以通过如下命令修改：
+  > ALTER TABLE 表名 AUTO_INCREMENT = xxx;
+
+5.如果添加数据时，给自增长字段（列）指定的值，则以指定的值为准。由于自增长会遵循目前字段中的最大值进行，所以**一般来说，如果指定了自增长，就按照自增长的规则来添加数据**。
+
+## 索引
+
+### 索引的类型
+
+1.主键索引：主键自动的为主索引（类型：`PRIMARY KEY`）。
+2.唯一索引：`UNIQUE`。
+3.普通索引：`INDEX`。
+4.全文索引：`FULLTEXT`。一般不适用MySQL自带的全文索引，而是使用全文搜索`Solr`和`ElasticSearch`。
+
+### 索引的使用
+
+1.创建索引：
+  ```mysql
+  CREATE [UNIQUE] INDEX index_name ON table_name(column_name[(length) ASC|DESC],...);
+  ```
+
+  另一个添加普通索引的办法：
+  ```mysql
+  ALTER TABLE table_name ADD INDEX [index_name] (index_column_name,..)
+  ```
+
+  添加主键索引：
+  ```mysql
+  ALTER TABLE table_name ADD PRIMARY KEY [index_name] (index_column_name)
+  ```
+
+2.删除索引：
+  ```mysql
+  DROP INDEX index_name ON table_name
+  ```
+
+  删除主键索引：
+  ```mysql
+  ALTER TABLE table_name DROP PRIMARY KEY
+  ```
+
+3.查询索引：
+  ```mysql
+  SHOW INDEX[/INDEXES/KEYS] FROM table_name
+  
+  DESC table_name
+  ```
+
+4.修改索引：先删除，再添加新的索引。
+
+### 创建索引的规则
+
+1.较频繁的作为查询条件字段应该创建索引。
+2.唯一性太差的字段不适合单独创建索引，即使频繁作为查询条件。
+3.更新非常频繁的字段不适合创建索引。
+4.不会出现在`WHERE`子句中的字段不该创建索引。
+
+## 事务
+
+### 概念
+
+事务用于保证数据的**一致性**，它由一组相关的dml语句组成。该组的dml语句要么全部成功，要么全部失败。
+
+### 事务和锁
+
+当执行事务操作时，MySQL会在表上加锁，防止其他用户改表的数据。
+
+### 基本操作
+
+1.`START TRANSACTION`/`SET autocommit = off`：开始一个事务。
+2.`SAVEPOINT 保存点名`：设置保存点。
+3.`ROLLBACK TO 保存点名`：回退事务。
+4.`ROLLBACK`：回退全部事务。
+5.`COMMIT`：提交事务，所有操作生效，不能回退。
+
+### 细节说明
+
+1.如果不开始事务，在默认情况下，dml操作是自动提交的，不能回滚。
+2.如果开始一个事务，在没有创建保存点时执行`ROLLBACK`默认回滚到事务开始的状态。
+3.可以在事务还没有提交时，创建多个保存点。
+4.可以在事务没有提交前，选择回退到哪个保存点。
+5.MySQL的事务机制需要InnoDB的存储引擎才可以使用。
+
+### 事务隔离级别
+
+#### 介绍
+
+多个连接开启各自事务，操作数据库中数据时，数据库系统要负责隔离操作，以保证各个连接在获取数据时的准确性。
+如果不考虑隔离性，则可能会引发脏读、不可重复读、幻读的问题。
+- 脏读：当一个事务读取另一个事务尚未提交的修改时，产生脏读。
+- 不可重复读：同一查询在同一事务中多次进行，由于其他提交事务所做的修改或删除，每次返回不同的结果集，此时发生不可重复读。
+- 幻读：同一查询在同一事务中多次进行，由于其他提交事务所做的插入操作，每次返回不同的结果集，此时发生幻读。
+
+概念：MySQL隔离级别定义了**事务与事务之间的隔离程度**。
+
+#### 事务隔离级别
+
+| MySQL隔离级别 | 脏读 | 不可重复读 | 幻读 | 加锁读 |
+|:-:|:-:|:-:|:-:|:-:|
+| 读未提交（Read uncommitted） | √ | √ | √ | 不加锁 |
+| 读已提交（Read committed） | × | √ | √ | 不加锁 |
+| 可重复读（Repeatable read） | × | × | × | 不加锁 |
+| 可串行化（Serializable） | × | × | × | 加锁 |
+
+> 1.查看当前会话的隔离级别：SELECT @@tx_isolation
+> 2.查看系统当前的隔离级别：SELECT @@global.tx_isolation
+> 3.设置当前会话隔离级别：SET SESSION TRANSACTION ISOLATION LEVEL ...
+> 4.设置系统当前隔离级别：SET GLOBAL TRANSACTION ISOLATION LEVEL ...
+> 5.MySQL默认的事务隔级别是REPEATABLE READ。一般情况下，该级别可以满足绝大部分项目需求，没有特殊要求，没有必要修改。
+> 6.全局修改：修改`my.ini`配置文件，在最后加上
+    #可选参数有：READ-UNCOMMITTED, READ-COMMITTED, REPEATABLE-READ, SERIALIZABLE.
+    [mysqld]
+    transaction-isolation = REPEATABLE-READ
+
+### ACID特性
+
+1.原子性：事务是一个不可分割的工作单位，事务中的操作要么都发生，要么都不发生。
+2.一致性：事务必须使数据库从一个一致性状态变换到另外一个一致性状态。
+3.隔离性：多个用户并发访问数据库时，数据库为每一个用户开启的事务，不能被其他事务的操作数据所干扰，多个并发事务之间要相互隔离。
+4.持久性：一个事务一旦被提交，它对数据库中数据的改变就是永久性的，接下来即使数据库发生故障，也不应该对其有任何影响。
+
+## 表类型和存储引擎
+
+### 基本介绍
+
+1.MySQL的表类型由存储引擎决定，主要包括MyISAM、InnoDB、MEMORY等。
+2.MySQL数据表主要支持六种类型，分别是：CSV、Memory、ARCHIVE、MRG_MYISAM、MyISAM、InnoDB。这六种类型又可以分为两类，一类是事务安全型，如InnoDB，其余都属于第二类，成为非事务安全型。
+
+### 主要的存储引擎/表类型特点
+
+| 特点 | MyISAM | InnoDB | MEMORY | Archive |
+|:-:|:-:|:-:|:-:|:-:|
+| 批量插入的速度 | 高 | 低 | 高 | 非常高 |
+| 事务安全 |  | 支持 |  |  |
+| 全文索引 | 支持 |  |  |  |
+| 锁机制 | 表锁 | 行锁 | 表锁 | 行锁 |
+| 存储限制 | 没有 | 64TB | 有 | 没有 |
+| B树索引 | 支持 | 支持 | 支持 |  |
+| 哈希索引 |  | 支持 | 支持 |  |
+| 集群索引 |  | 支持 |  |  |
+| 数据缓存 |  | 支持 | 支持 |  |
+| 索引缓存 | 支持 | 支持 | 支持 |  |
+| 数据可压缩 | 支持 |  |  | 支持 |
+| 空间使用 | 低 | 高 | N/A | 非常低 |
+| 内存使用 | 低 | 高 | 中等 | 低 |
+| 支持外键 |  | 支持 |  |  |
+
+### 细节说明
+
+1.MyISAM不支持事务，也不支持外键，但其访问速度快，对事务完整性没有要求。
+2.InnoDB存储引擎提供了具有提交、回滚和崩溃回复能力的事务安全，但是比起MyISAM存储引擎，InnoDB写的处理效率差一些并且会占用更多的磁盘空间以保留数据和索引。
+3.MEMORY存储引擎使用存在内存中的内容来创建表。每个MEMORY表只实际对应一个磁盘文件。MEMORY类型的表访问非常得快，因为它的数据是存放在内存中的，并且默认使用HASH索引。但是一旦服务关闭，表中的数据就会丢失掉，表的结构还在。
+
+### 如何选择表的存储引擎
+
+1.如果不需要事务，处理的只是基本的CRUD操作，那么MyISAM是不二选择，速度快。
+2.如果需要支持事务，选择InnoDB。
+3.MEMORY存储引擎就是将数据存储在内存中，由于没有磁盘I/O的等待，速度极快。但由于是内存存储引擎，所做的任何修改在服务器重启后都将消失。
+
+### 通过指令修改存储引擎
+
+```mysql
+ALTER TABLE table_name ENGINE = 存储引擎;
+```
+
+## 视图
+
+### 基本概念
+
+视图是一个虚拟表，其内容由查询定义。同真实的表一样，视图包含列，**其数据来自对应的真实表**（基表）。
+
+### 基本使用
+
+1.`CREATE VIEW view_name AS SELECT ...`：创建视图。
+2.`ALTER VIEW view_name AS SELECT ...`：更新成新的视图。
+3.`SHOW CREATE VIEW view_name`：查看创建视图的指令。
+4.`DROP VIEW view_name1...`：删除视图。
+
+### 细节讨论
+
+1.创建视图后，到数据库去看，对应视图只有一个视图结构文件（形式：视图名.frm）。
+2.视图的数据变化会影响到基表，基表的数据变化也会影响到视图。
+3.视图中可以再使用视图，数据仍然来自基表。
+
+### 视图最佳实践
+
+1.安全。
+2.性能。
+3.灵活。
+
+## MySQL管理
+
+### MySQL用户管理
+
+MySQL中的用户都存储在系统数据库mysql中的user表中。
+其中user表的重要字段说明：
+1.`host`：允许登录的位置。`localhost`表示该用户只允许本机登录，也可以指定IP。
+2.`user`：用户名。
+3.`authentication string`：密码。通过MySQL的`password()`函数加密之后的密码。
+
+#### 创建用户
+
+```mysql
+CREATE USER '用户名'@'允许登录的位置' IDENTIFIED BY '密码'
+```
+
+> 创建用户，同时指定密码。
+
+#### 删除用户
+
+```mysql
+DROP USER '用户名'@'允许登录的位置'
+```
+
+#### 用户修改密码
+
+- 修改自己的密码：
+  ```mysql
+  SET PASSWORD = PASSWORD('密码');
+  ```
+  
+- 修改他人密码（需要有修改用户密码的权限）：
+  ```mysql
+  SET PASSWORD FOR '用户名'@'登陆位置' = PASSWORD('密码');
+  ```
+  
+### MySQL权限管理
+
+| 权限 | 意义 |
+|---|---|
+| ALL [PRIVILEGES] | 设置除GRANT OPTION之外的所有简单权限 |
+| ALTER | 允许使用ALTER TABLE |
+| ALTER ROUTINE | 更改或取消已存储的子程序 |
+| CREATE | 允许使用CREATE TABLE |
+| CREATE ROUTINE | 创建已存储的子程序 |
+| CREATE TEMPORARY TABLES | 允许使用CREATE TEMPORARY TABLE |
+| CREATE USER | 允许使用CREATE USER、DROP USER、RENAME USER和REVOKE ALL PRIVILEGES。 |
+| CREATE VIEW | 允许使用CREATE VIEW |
+| DELETE | 允许使用DELETE |
+| DROP | 允许使用DROP TABLE |
+| EXECUTE | 允许用户运行已存储的子程序 |
+| FILE | 允许使用SELECT...INTO OUTFILE和LOAD DATA INFILE |
+| INDEX | 允许使用CREATE INDEX和DROP INDEX |
+| INSERT | 允许使用INSERT |
+| LOCK TABLES | 允许对您拥有SELECT权限的表使用LOCK TABLES |
+| PROCESS | 允许使用SHOW FULL PROCESSLIST |
+| REFERENCES | 未被实施 |
+| RELOAD | 允许使用FLUSH |
+| REPLICATION CLIENT | 允许用户询问从属服务器或主服务器的地址 |
+| REPLICATION SLAVE | 用于复制型从属服务器（从主服务器中读取二进制日志事件） |
+| SELECT | 允许使用SELECT |
+| SHOW DATABASES | SHOW DATABASES显示所有数据库 |
+| SHOW VIEW | 允许使用SHOW CREATE VIEW |
+| SHUTDOWN | 允许使用mysqladmin shutdown |
+| SUPER | 允许使用CHANGE MASTER、KILL、PURGE MASTER LOGS和SET GLOBAL语句，mysqladmin debug命令；允许您连接（一次），即使已达到max_connections。 |
+| UPDATE | 允许使用UPDATE |
+| USAGE | "无权限"的同义词 |
+| GRANT OPTION | 允许授予权限 |
+
+#### 给用户授权
+
+- 基本语法：
+  ```mysql
+  GRANT 权限列表 ON 库.对象名 TO '用户名'@'登陆位置' [IDENTIFIED BY '密码']
+  ```
+  
+- 说明：
+  1.权限列表，多个权限用逗号分开。
+    ```mysql
+    GRANT SELECT ON...
+    GRANT SELECT,DELETE,CREATE ON ...
+    GRANT ALL [PRIVILEGES] ON ...  #表示赋予该用户在该对象上的所有权限
+    ```
+  2.特别说明：
+    `*.*`：代表本系统中的所有数据库的所有对象（表、视图、存储过程）。
+    `库.*`：表示某个数据库中的所有数据对象（表、视图、存储过程等）。
+  3.`IDENTIFIED BY`可以省略，也可以写出。如果用户存在，就是修改该用户的密码；如果该用户不存在，就是创建该用户。
+
+#### 回收用户授权
+
+```mysql
+REVOKE 权限列表 ON 库.对象名 FROM '用户名'@'登陆位置'
+```
+
+#### 权限生效指令
+
+如果权限没有生效，可以执行下面命令：
+```mysql
+FLUSH PRIVILEGES;
+```
+
+#### 细节说明
+
+1.在创建用户的时候，如果不指定host，则为`%`。`%`表示所有的IP都有连接权限。
+2.如果指定`CREATE USER 'xxx'@'192.168.1.%'`则表示xxx用户在192.168.1.*的IP可以登录MySQL。
+3.在删除用户时，如果host不是`%`，则需要明确指定`'用户'@'host值'`。
+
+# Chapter 25 JDBC和数据库连接池
+
+## 基本介绍
+
+1.JDBC为访问不同的数据库提供了统一的接口，为使用者屏蔽了细节问题。
+2.使用JDBC，可以连接任何提供JDBC驱动程序的数据库系统，从而完成对数据库的各种操作。
+3.JDBC是Java提供一套用于数据库操作的接口API。**Java程序员只需要面向这套接口编程即可。**不同的数据库厂商，需要针对这套接口提供不同实现。
+4.JDBC API是一系列的接口，它统一和规范了应用程序与数据库的连接，执行SQL语句，并得到返回结果等各类操作，相关类和接口在`java.sql`和`javax.sql`包中。
+
+## JDBC程序编写步骤
+
+1.注册驱动：加载`Driver`类。
+2.获取连接：得到`Connection`。
+3.执行增删改查：发送相关的SQL指令给MySQL执行。
+4.释放资源：关闭相关连接。
+
+### 获取数据库连接的5种方式
+
+- 方式1：获取`Driver`实现类对象
+  ```java
+  Driver driver = new com.mysql.jdbc.Driver()_;
+  String url = "jdbc:mysql://localhost:3306/jdbc_db";
+  Properties info = new Properties();
+  info.setProperty("user","root");
+  info.setProperty("password", "XXX");
+  Connection conn = driver.connect(url, info);
+  System.out.println(conn);
+  ```
+  
+  > 方式1会直接使用`com.mysql.jdbc.Driver()`，属于静态加载，灵活性差，依赖强。
+  
+- 方式2：反射机制
+  ```java
+  Class clazz = Class.forName("com.mysql.jdbc.Driver")
+  Driver driver = (Driver) clazz.newInstance();
+  String url = "jdbc:mysql://localhost:3306/jdbc_db";
+  Properties info = new Properties();
+  info.setProperty("user","root");
+  info.setProperty("password", "XXX");
+  System.out.println(conn);
+  Connection conn = driver.connect(url, info);
+  ```
+  
+  > 使用反射加载`Driver`类，动态加载，更加灵活，减少依赖性。
+  
+- 方式3：使用`DriverManager`替换`Driver`
+  ```java
+  Class clazz = Class.forName("com.mysql.jdbc.Driver");
+  Driver driver = (Driver) clazz.newInstance();
+  String user = "root";
+  String password = "XXX";
+  String url = "jdbc:mysql://localhost:3306/jdbc_db";
+  DriverManager.registerDriver(driver);
+  System.out.println(conn);
+  Connection conn = DriverManager.getConnection(url, user, password);
+  System.out.println(conn);
+  ```
+  
+- 方式4：使用`Class.forName`自动完成注册驱动，简化代码
+  ```java
+  Class.forName("com.mysql.jdbc.Driver");
+  String url = "jdbc:mysql://localhost:3306/jdbc_db";
+  String user = "root";
+  String password = "xxx";
+  System.out.println(conn);
+  Connection conn = DriverManager.getConnection(url, user, password);
+  System.out.println(conn);
+  ```
+  
+  > 1.MySQL驱动5.1.6可以无需`Class.forName("com.mysql.jdbc.Driver");`。
+  > 2.从JDK1.5以后使用了JDBC4，不再需要显示调用`Class.forName();`注册驱动，而是自动调用驱动jar包下`META-INF\service\java.sql.Driver`文本中的类名称去注册。
+  > 3.建议还是写上`Class.forName("com.mysql.jdbc.Driver");`，更加明确。
+
+- 方式5：使用配置文件，连接数据库更灵活
+  1.`Connection conn = DriverManager.getConnection(jdbc:mysql://localhost:3306/jdbc_db, "root", "xxx");`中的字符串各个值（比如端口、数据库、用户名、密码）为了方便，可以将信息写入到`.properties`文件中，方便操作。
+  2.`jdbc.properties`
+    ```txt
+    user=root
+    password=xxx
+    url=jdbc:mysql://localhost:3306/jdbc_db
+    driver=com.mysql.jdbc.Driver
+    ```
+  3.通过`Properties`对象，获取配置文件的信息。
+    ```java
+    //通过Properties对象获取配置文件的信息
+    Properties properties = new Properties();
+    properties.load(new FileInputStream("src\\mysql.properties"));
+    //获取相关的值
+    String user = properties.getProperty("user");
+    String password = properties.getProperty("password");
+    String driver = properties.getProperty("driver");
+    String url = properties.getProperty("url");
+    Class.forName(driver);
+    Connection conn = DriverManager.getConnection(url, user, password);
+    System.out.println(conn);
+    ```
+  
+## ResultSet 结果集
+
+### 基本介绍
+
+1.表示数据库结果集的数据表，通常通过执行查询数据库的语句生成。
+2.`ResultSet`对象保持一个光标指向其当前的数据行。最初，光标位于第一行之前。
+3.`next`方法将光标移动到下一行，并且由于在`ResultSet`对象中没有更多行时返回`false`，因此可以在`while`循环中，使用循环来遍历结果集。
+
+## Statement
+
+### 基本介绍
+
+1.`Statement`对象，用于执行静态SQL语句，并返回其生成的结果的对象。
+2.在连接建立后，需要对数据库进行访问，执行命名或是SQL语句，可以通过
+  - Statement（存在SQL注入）
+  - PreparedStatement（预处理）
+  - CallableStatement（存储过程）
+
+3.`Statement`对象执行SQL语句，存在**SQL注入**风险。
+4.SQL注入是利用某些系统没有对用户输入的数据进行充分的检查，而在用户输入数据中注入非法的SQL语句段或是命令。恶意攻击数据库。
+5.要防范SQL注入，只要用`PreparedStatement`（从`Statement`扩展而来）取代`Statement`就可以了。
+
+## PreparedStatement
+
+### 基本介绍
+
+1.`PreparedStatement`执行的SQL语句中的参数用问号来表示，调用`PreparedStatement`对象的`setXxx()`方法来设置这些参数`setXxx()`方法有两个参数，第一个参数是要设置的SQL语句中的参数的索引（从1开始），第二个参数是设置的SQL语句中的参数的值。
+2.调用`executeQuery()`，返回`ResultSet`对象。
+3.调用`executeUpdate()`，执行更新，包括增、删、修改。
+
+### 预处理的好处
+
+1.不用再使用`+`拼接SQL语句，减少语法错误。
+2.有效的解决了SQL注入问题。
+3.大大减少了编译次数，效率极高。
+
+## 封装JDBCUtils
+
+**示例：**
+```java
+public class JDBCUtils{
+	//定义相关的属性，因为只需要一份，所以使用static
+	private static String user;		//用户名
+	private static String password;	//密码
+	private static String url;		//URL
+	private static String driver;	//驱动名
+	
+	//在static代码块去初始化
+	static{
+		try{
+			Properties properties = new Properties();
+			properties.load(new FileInputStream("src\\mysql.properties"));
+			//读取相关的属性值
+			user = properties.getProperty("user");
+			password = properties.getProperty("password");
+			url = properties.getProperty("url");
+			driver = properties.getProperty("driver");
+		}
+		catch(IOException e){
+			//在实际开发中，我们可以这么处理：
+			//1.将编译异常转成运行异常。
+			//2.这是调用者，可以选择捕获该异常，也可以选择默认处理该异常，比较方便。
+			throw new RuntimeException(e);
+		}
+	}
+	
+	//连接数据库，返回Connection
+	public static Connection getConnection(){
+		try{
+			return DriverManager.getConnection(url,user,password);
+		}catch(SQLException e){
+			//1.将编译异常转成运行异常。
+			//2.这是调用者，可以选择捕获该异常，也可以选择默认处理该异常，比较方便。
+			throw new RuntimeException(e);
+		}
+	}
+	
+	//关闭相关资源
+	/*
+		1.ResultSet 结果集
+		2.Statement 或者 PreparedStatement
+		3.Connection
+		4.如果需要关闭资源，就传入对象，否则传入null
+	*/
+	public static void close(ResultSet set,Statement statement,Connection connection){
+		try{
+			//判断是否为null
+			if(set != null){
+				set.close();
+			}
+			if(statement != null){
+				statement.close();
+			}
+			if(connection != null){
+				connection.close();
+			}
+		}catch(SQLException e){
+			//将编译异常转成运行异常抛出
+			throw new RuntimeException(e);
+		}
+	}
+}
+```
+
+## 事务
+
+### 基本介绍
+
+1.JDBC程序中，当一个`Connection`对象创建时，默认情况下是自动提交事务：每次执行一个SQL语句时，如果执行成功，就会向数据库自动提交，而不能回滚。
+2.JDBC程序中，为了让多个SQL语句作为一个整体执行，需要**使用事务**。
+3.调用`Connection`的`setAutoCommit(false)`可以取消自动提交事务。
+4.在所有的SQL语句都成功执行后，调用`Connection`对象的`commit()`方法提交事务。
+5.在其中某个操作失败或出现异常时，调用`Connection`对象的`rollback()`方法回滚事务。
+
+## 批处理
+
+### 基本介绍
+
+1.当需要成批插入或者更新记录时，可以采用Java的批量更新机制，这一机制允许多条语句一次性提交给数据库批量处理。通常情况下，比单独提交处理更有效率。
+2.JDBC的批量处理语句包括下面方法：
+  - `addBatch()`：添加需要批量处理的SQL语句或参数。
+  - `executeBatch()`：执行批量处理语句。
+  - `clearBatch()`：清空批处理包的语句。
+
+3.JDBC连接MySQL时，如果要使用批处理功能，请在URL中加参数`?ewriteBatchedStatements = true`。
+4.批处理往往和`PreparedStatement`一起搭配使用，可以即减少编译次数，又减少运行次数，效率大大提高。
+
+## 数据库连接池
+
+### 基本介绍
+
+1.预先在缓冲池中放入一定数量的连接，当需要建立数据库连接时，只需从缓冲池中取出一个，使用完毕之后再放回去。
+2.数据库连接池负责分配、管理和释放数据库连接，它允许应用程序重复使用一个现有的数据库连接，而不是重新建立一个。
+3.当应用程序向连接池请求的连接数超过最大连接数量时，这些请求将被加入到等待队列中。
+
+### 数据库连接池的种类
+
+1.JDBC的数据库连接池使用`javax.sql.DataSource`来表示，`DataSouce`只是一个接口，该接口通常由第三方提供实现（jar包）。
+2.`C3P0`数据库连接池，速度相对较慢，稳定性不错。
+3.`DBCP`数据库连接池，速度相对`C3P0`较快，但不稳定。
+4.`Proxool`数据库连接池，有监控连接池状态的功能，稳定性较`C3P0`差一点。
+5.`BoneCP`数据库连接池，速度快。
+6.`Druid（德鲁伊）`是阿里提供的数据库连接池，集`DBCP`、`C3P0`、`Proxool`优点于一身的数据库连接池。
+
+#### C3P0
+
+- **示例：**
+  ```java
+  public class C3P0_{
+  	//方式1：相关参数，在程序中指定user、url、password等
+  	public void testC3P0_01() throws Exception{
+  		//1.创建一个数据源对象
+  		ComboPooledDataSource comboPooledDataSource = new ComboPooledDataSource();
+  		//2.通过配置文件mysql.properties获取相关连接的信息
+  		Properties properties = new Properties();
+  		properties.load(new FileInputStream("src\\mysql.properties"));
+  		//读取相关的属性值
+  		String user = properties.getProperty("user");
+  		String password = properties.getProperty("password");
+  		String url = properties.getProperty("url");
+  		String driver = properties.getProperty("driver");
+  		
+  		//给数据源 comboPooledDataSource 设置相关的参数
+  		//注意：连接管理是由 comboPooledDataSource 来管理
+  		comboPooledDataSource.setDriverClass(driver);
+  		comboPooledDataSource.setJdbcUrl(url);
+  		comboPooledDataSource.setUser(user);
+  		comboPooledDataSource.setPassword(password);
+  
+  		//设置初始化连接数
+  		comboPooledDataSource.setInitialPoolSize(10);
+  		//最大连接数
+  		comboPooledDataSource.setMaxPoolSize(50);
+  		Connection connection = comboPooledDataSource.getConnection(); //这个方法就是从 DataSource 接口实现
+  		//stem.out.println("连接OK");
+  		connection.close();
+  	}
+  	
+  	//方式2：使用配置文件模板来完成
+  	//1. 将c3p0 提供的 c3p0.config.xml 拷贝到 src目录下
+  	//2. 该文件指定了连接数据库和连接池的相关参数
+  	public void testC3P0_02() throws SQLException {
+  		ComboPooledDataSource comboPooledDataSource = new ComboPooledDataSource("xxx");	//xxx写入配置文件中数据源名称
+  		Connection connection = comboPooledDataSource.getConnection();
+  		System.out.println("连接OK");
+  		connection.close();
+  	}
+  }
+  ```
+
+- `c3p0-config.xml`
+  ```xml
+  <c3p0-config>
+    <!-- 数据源名称代表连接池 -->
+    <named-config name="xxx">
+  
+    <!-- 驱动类 -->
+    <property name="driverClass">com.mysql.jdbc.Driver</property>
+  
+    <!-- url-->
+    <property name="jdbcUrl">jdbc:mysql://127.0.0.1:3306/hsp_db02</property>
+  
+    <!-- 用户名 -->
+    <property name="user">root</property>
+  
+    <!-- 密码 -->
+    <property name="password">hsp</property>
+  
+    <!-- 每次增长的连接数-->
+    <property name="acquireIncrement">5</property>
+  
+    <!-- 初始的连接数 -->
+    <property name="initialPoolSize">10</property>
+  
+    <!-- 最小连接数 -->
+    <property name="minPoolSize">5</property>
+    
+    <!-- 最大连接数 -->
+    <property name="maxPoolSize">50</property>
+  ```
+
+#### Druid（德鲁伊）连接池
+
+**示例：**
+```java
+public class Druid_ {
+	public void testDruid() throws Exception {
+		//1. 加入 Druid的jar包
+		//2. 加入配置文件druid.properties，将该文件拷贝项目的src目录
+		//3. 创建Properties对象，读取配置文件
+		Properties properties = new Properties();
+		properties.load(new FileInputStream("src\\druid.properties"));
+		//4. 创建一个指定参数的数据库连接池
+		DataSource dataSource = DruidDataSourceFactory.createDataSource(properties);
+		Connection connection = dataSource.getConnection();
+		System.out.println("连接成功!");
+		connection.close();
+	}
+}
+```
+
+##### 基于Druid数据库连接池的工具类JDBCUtils
+
+**示例：**
+```java
+public class JDBCUtilsByDruid {
+	private static DataSource ds;
+	//在静态代码块完成DataSource初始化
+	static {
+		Properties properties = new Properties();
+		try {
+			properties.load(new FileInputStream("src\\druid.properties"));
+			ds = DruidDataSourceFactory.createDataSource(properties);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	//编写getConnection方法
+	public static Connection getConnection() throws SQLException {
+		return ds.getConnection();
+	}
+
+	//关闭连接, 在数据库连接池技术中, close不是真的断掉连接，而是把使用的Connection对象放回连接池
+	public static void close(ResultSet resultSet, Statement statement, Connection connection) {
+		try{
+			if(resultSet != null) {
+				resultSet.close();
+			}
+			if(statement != null) {
+				statement.close();
+			}
+			if(connection != null) {
+				connection.close();
+			}
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+	}
+}
+```
+
+## Apache-DBUtils
+
+- 对JDBC封装，简化JDBC编码的工作量。
+
+1.`QueryRunner`类: 该类封装了SQL的执行,是线程安全的。可以实现增、删、改、查、批处理
+2.使用`QueryRunner`类实现查询。
+3.`ResultSetHandler`接口: 该接口用于处理`java.sql.ResultSet`，将数据按要求转换为另一种形式。
+  - `ArrayHandler`：把结果集中的第一行数据转成对象数组。
+  - `ArrayListHandler`：把结果集中的每一行数据都转成一个数组，再存放到List中。
+  - `BeanHandler`：将结果集中的第一行数据封装到一个对应的JavaBean实例中。
+  - `BeanListHandler`：将结果集中的每一行数据都封装到一个对应的JavaBean实例中，存放到List里。
+  - `ColumnListHandler`：将结果集中某一列的数据存放到List中。
+  - `KeyedHandler(name)`：将结果集中的每行数据都封装到Map里，再把这些map再存到一个map里，其key为指定的key。
+  - `MapHandler`：将结果集中的第一行数据封装到一个Map里，key是列名，value就是对应的值。
+  - `MapListHandler`：将结果集中的每一行数据都封装到一个Map里，然后再存放到List。
+
+## DAO和增删改查通用方法-BasicDao
+
+# Chapter 27 正则表达式
+
+## 基本介绍
+
+一个正则表达式，就是用某种模式去匹配字符串的一个公式。
+
+## 语法
+
+### 基本介绍
+
+按照功能分类，元字符可以分为：
+- 限定符
+- 选择匹配符
+- 分组组合和反向引用符
+- 特殊字符
+- 字符匹配符
+- 定位符
+
+#### 元字符-转义号
+
+`\\`符号：
+在我们使用正则表达式去检索某些特殊字符的时候，需要用到转义符号，否则检索不到结果，甚至会报错。
+需要用到转义符号的字符有：`.`、`*`、`+`、`(`、`)`、`$`、`/`、`\`、`?`、`[`、`]`、`^`、`{`、`}`。
+> 在Java的正则表达式中，`\\`代表其他语言中的`\`。
+
+#### 元字符-字符匹配符
+
+##### 字符匹配
+
+|符号|含义|说明|
+|---|---|---|
+|`[ ]`|可接收的字符列表|`e、f、g、h`中的任意1个字符|
+|`[^]`|不接收的字符列表|除`a、b、c`之外的任意1个字符，包括数字和特殊符号|
+|`-`|连字符|表示字符范围|
+|`.`|匹配除`\n`以外的任何字符|以`a`开头、`b`结尾，中间包括2个任意字符的长度为4的字符串|
+|`\d`|匹配单个数字字符，相当于`[0-9]`|包含3个或4个数字的字符串|
+|`\D`|匹配单个非数字字符，相当于`[^0-9]`|以单个非数字字符开头，后接任意个数字字符串|
+|`\w`|匹配单个数字、大小写字母字符，相当于`[0-9a-zA-Z]`|以3个数字字符开头的长度为7的数字字母字符串|
+|`\W`|匹配单个非数字、大小写字母字符，相当于`[^0-9a-zA-Z]`|以至少1个非数字字母字符开头，2个数字字符结尾的字符串|
+
+##### 大小写匹配
+
+Java 正则表达式**默认区分字母大小写**。如果需要忽略大小写，可以使用 `(?i)`。
+|写法|含义|
+|---|---|
+|`(?i)abc`|`abc`整体不区分大小写|
+|`a(?i)bc`|只有`bc`不区分大小写|
+|`a((?i)b)c`|只有`b`不区分大小写|
+|`Pattern pat = Pattern.compile(regEx, Pattern.CASE_INSENSITIVE);`|在编译正则表达式时指定忽略大小写|
+
+#### 元字符-选择匹配符
+
+在匹配某个字符串的时候是选择性的，即：既可以匹配这个，又可以匹配那个，这时需要用到选择匹配符。
+|符号|含义|示例|解释|
+|---|---|---|---|
+|`|`|匹配`|`之前或之后的表达式| `ab|cd`|`ab`或者`cd`|
+
+#### 元字符-限定符
+
+用于指定其前面的字符和组合项连续出现多少次。
+|符号|含义|示例|说明|
+|---|---|---|---|
+|`*`|指定字符重复0次或n次（不要求）|`(abc)*`|匹配任意个`abc`，包括 0 次|
+|`+`|指定字符重复1次或n次（至少一次）|`m+(abc)*`|`m`至少出现1次，后面可接任意个 `abc`|
+|`?`|指定字符重复0次或1次（最多一次）|`m+abc?`|`m`至少出现1次，后面接`ab`或`abc`|
+|`{n}`|指定字符重复n次|`[abcd]{3}`|只能匹配恰好3个字符|
+|`{n,}`|指定至少n个匹配|`[abcd]{3,}`|由`abcd`中字符组成的任意长度不小于3的字符串|
+|`{n,m}`|指定至少n个但不多于m个匹配|`[abcd]{3,5}`|由`abcd`中字符组成的长度不小于3、不大于5的字符串|
+
+#### 元字符-定位符
+
+定位符，规定要匹配的字符串出现的位置，比如在字符串的开始还是在结束的位置。
+|符号|含义|示例|说明|
+|---|---|---|---|
+|`^`|指定起始字符|`^[0-9]+[a-z]*`|以至少1个数字开头，后接任意个小写字母的字符串|
+|`$`|指定结束字符|`^[0-9]\\-[a-z]+$`|以1个数字开头，后接字符`-`，并以至少1个小写字母结尾的字符串|
+|`\b`|匹配目标字符串的边界|`han\b`|字符串边界指子串间有空格，或者目标字符串位于字符串的结束位置|
+|`\B`|匹配目标字符串的非边界|`han\B`|与`\b`的含义相反|
+
+#### 分组
+
+|分组构造形式|说明|
+|---|---|
+|`(pattern)`|**非命名捕获**。捕获匹配的子字符串。编号为零的第一个捕获是由整个正则表达式模式匹配的文本，其它捕获结果则根据左括号的顺序从1开始自动编号。|
+|`(?<name>pattern)`|**命名捕获**。将匹配的子字符串捕获到一个组名或编号名称中`name`的字符串不能包含任何标点符号，并且不能以数字开头。可以使用单引号替代尖括号，例如`(?‘name’)`。|
+|`(?:pattern)`|匹配`pattern`，但不捕获该匹配的子表达式，即它是一个非捕获匹配，不存储供以后使用的匹配。对于用`or`字符（`|`）组合模式部件的情况很有用。例如`industr(?:y|ies)`比`industry\|industries`更经济。|
+|`(?=pattern)`|非捕获匹配。匹配`pattern`前面的字符串，但不消耗`pattern`。例如`Windows (?=95\|98\|NT\|2000)`可以匹配`Windows 2000`中的`Windows`，但不能匹配`Windows 3.1`中的`Windows`。|
+|`(?!pattern)`|非捕获匹配。匹配不处于`pattern`前面的字符串。例如，`Windows (?!95\|98\|NT\|2000)`可以匹配`Windows 3.1`中的`Windows`，但不能匹配`Windows 2000`中的`Windows`。|
+
+## 正则表达式的三个常用类
+
+`java.util.regex`包主要包括以下三个类：
+- `Pattern`类
+- `Matcher`类
+- `PatternSyntaxException`类
+
+### Pattern类
+
+`Pattern`对象是一个正则表达式对象。
+- `Pattern`类没有公共构造方法。
+- 要创建`Pattern`对象，需要调用其公共静态方法`compile()`。
+- `compile()`方法接收一个正则表达式作为参数，并返回一个`Pattern`对象。
+
+### Matcher类
+
+`Matcher`对象是对输入字符串进行解释和匹配的引擎。
+- `Matcher`类没有公共构造方法。
+- 需要调用`Pattern`对象的`matcher()`方法来获得一个`Matcher`对象。
+
+### PatternSyntaxException
+
+`PatternSyntaxException`是一个非强制异常类，用于表示正则表达式模式中的语法错误。
+
+## 分组、捕获、反向引用
+
+### 分组
+
+可以用圆括号`()`组成一个比较复杂的匹配模式。圆括号中的部分可以看作一个**子表达式 / 分组**。
+
+### 捕获
+
+将正则表达式中子表达式/分组匹配的内容保存到内存中，以数字编号或显式命名的组里，方便后续引用。
+- 分组按照左括号出现的顺序从左向右编号。
+- 第一个出现的分组编号为`1`，第二个为`2`，以此类推。
+- `0`代表整个正则表达式匹配的内容。
+
+### 反向引用
+
+圆括号中的内容被捕获后，可以在这个括号后被再次使用，从而写出比较实用的匹配模式。这种引用称为**反向引用**。反向引用可以出现在正则表达式内部，也可以出现在正则表达式外部：
+- **内部反向引用**：使用`\\分组号`
+- **外部反向引用**：使用`$分组号`
+
+## String类中使用正则表达式
+

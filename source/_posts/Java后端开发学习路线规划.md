@@ -8,17 +8,19 @@ tags: JAVA
 |时间|学习内容|学习进度|备注|
 |:-:|:-:|:-:|:-:|
 |-2026.9.17|Java SE|`910/910`||
-|2026.9.21-|Java Web|`/200`|*maven+mysql+mybatis+spring*|
-||苍穹外卖|`待开始`|*SSM增删改查*|
-||Redis+点评|`待开始`|*redis实践、高级篇、原理篇*|
-||Netty+手写rpc|`待开始`|*网络通信、负载均衡*|
+|2026.9.21-|Java Web|145`/200`|*maven+mysql+mybatis+spring*|
+||项目设计|`待开始`|*SSM增删改查*|
+||Redis+点评|`待开始`|*redis实践、高级篇、原理篇*（Redis重要）|
 ||juc|`待开始`|*并发编程*|
 ||数据结构与算法|`待开始`|*数据结构*|
 ||JVM|`待开始`||
 ||设计模式|`待开始`|*单例、工厂*|
-||MySQL|`待开始`||
+||MySQL|`待开始`|重要|
 ||leetcode|`待开始`|*代码随想录+hot100*|
-||微服务|`待开始`|*消息队列+springcloud*|
+||微服务|`待开始`|*消息队列+springcloud*（简单了解）|
 ||优化项目+八股|`待开始`|*mysql+redis+juc+jvm+计基*|
+||Netty+手写rpc|`待开始`|*网络通信、负载均衡*（rpc比较重要）|
 
 >以上内容源自http://xhslink.com/a/ZieLo0AkymYab
+
+- 其他：操作系统、计算机网络、数据结构的基础知识；AI Agent。
